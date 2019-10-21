@@ -1,0 +1,17 @@
+d7ac16464766f4c22ee64ea39aea6918 *DESCRIPTION
+aa80dfb775791c91639e56e8c6af524b *NAMESPACE
+92835e78e049f65bb1d6a623d7ff7973 *R/RcppExports.R
+fb702f6e735128bd1f67f75e72b358e9 *R/cnaOpt.R
+24bc27684a6beb470c47634f73efe9c3 *R/conCovOpt.R
+cd2bc47a99ee14bab562e632d86d3594 *R/conCovOpt_utils.R
+615915a65797b39b6a6eaba373569eda *R/ereduce.R
+ba3154471a9d42596e3eedeadf15bc70 *R/from_cna_namespace.R
+e35894350364331ed89a39e79df7581c *man/cnaOpt.Rd
+fcb6ff5e876853eb2d3673c92a954d81 *man/conCovOpt.Rd
+2d365b6dfe4c8799c0333706443a9490 *man/findOutcomes.Rd
+8e36afee6dbc03f45ab9a8b8f8adba9c *man/reprodAssign.Rd
+c52c3897351c4f007164f26623b0bd63 *man/rreduce_ereduce.Rd
+35ed0115919044b71bf34e1b8cebe5bd *man/selectMax.Rd
+117576938cd5d2822154b2abc8893250 *src/C_iterate.cpp
+ec955298bcec3856ec72546353ce12f3 *src/RcppExports.cpp
+711d8cd8b385a1dbec4dbb4f4d0d90d4 *src/typedefs.h
