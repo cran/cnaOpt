@@ -116,7 +116,7 @@ reprodAssign <- function(x, outcome, id = xi$id){
 DNFbuild <- function(x, outcome, reduce = c("rreduce", "ereduce", "none"), id = xi$id){
   stopifnot(inherits(x, "selectMax"), outcome %in% names(x))
   # resolve reduce arg
-  if (isTRUE(reduce)) reduce <- "reduce"
+  if (isTRUE(reduce)) reduce <- "rreduce"
   if (isFALSE(reduce) | is.null(reduce)) reduce <- "none"
   reduce <- match.arg(reduce)
   # truthTab

@@ -10,7 +10,8 @@
 
 \usage{
 ereduce(cond, x = full.tt(cond), full = !missing(x), simplify2constant = TRUE)
-rreduce(cond, x = full.tt(cond), full = !missing(x), verbose = FALSE, maxiter = 1000) 
+rreduce(cond, x = full.tt(cond), full = !missing(x), verbose = FALSE, maxiter = 1000,
+        simplify2constant = TRUE) 
 }
 
 \arguments{
