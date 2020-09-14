@@ -1,25 +1,25 @@
 
-#   x           A data.frame or truthTab (cs only!)
+#   x           A data.frame or configTable (cs only!)
 #   outcome     Name of the outcome (A column in x)
-#   ...         Passed to truthTab
+#   ...         Passed to configTable
 #   crit, cond  Passed to selectMax
 cnaOpt <- function(x, outcome, ..., crit = quote(con * cov), cond = quote(TRUE)){
   time.init <- Sys.time()
-  tt <- truthTab(x, ...)
-  outcomeVar <- if (attr(tt, "type") == "mv") sub("=.+", "", outcome) else (outcome)
-  stopifnot(outcomeVar %in% names(tt))
+  ct <- configTable(x, ...)
+  outcomeVar <- if (attr(ct, "type") == "mv") sub("=.+", "", outcome) else (outcome)
+  stopifnot(outcomeVar %in% names(ct))
   # Calculate con-cov optima for outcome
-  cco <- conCovOpt(tt, outcome) 
+  cco <- conCovOpt(ct, outcome) 
   # Calculate the con-cov maximum for outcome and scores
   best <- selectMax(cco, crit = crit, cond = cond)
   scores_best <- as.vector(reprodAssign(best, outcome = outcome))
   
   # get cond and cond_neg
-	cond <- mat2charList(tt, scores_best == 1L, outcomeVar)
-	cond_neg <- mat2charList(tt, scores_best == 0L, outcomeVar)
+	cond <- mat2charList(ct, scores_best == 1L, outcomeVar)
+	cond_neg <- mat2charList(ct, scores_best == 0L, outcomeVar)
   
   # MB's minization procedure
-  mhs <- MBproc(cond, cond_neg, tt.info(tt)$sc)
+  mhs <- MBproc(cond, cond_neg, ctInfo(ct)$sc)
   
   # Formulate into strings
   outStr <- C_mconcat(mhs, sep = "+")
@@ -36,7 +36,7 @@ cnaOpt <- function(x, outcome, ..., crit = quote(con * cov), cond = quote(TRUE))
                     stringsAsFactors = FALSE)
   out <- out[order(out$complexity), , drop = FALSE]
   out <- structure(out,
-                   tt = tt,
+                   ct = ct,
                    scores = scores_best,
                    timing = Sys.time() - time.init,
                    class = c("cnaOpt", "condTbl", "data.frame"))
@@ -50,7 +50,7 @@ cnaOpt <- function(x, outcome, ..., crit = quote(con * cov), cond = quote(TRUE))
 # (used in the functions above)
 
 # Extract cond in "charList" format from a matrix or data.frame
-#   x must be a truthTab!
+#   x must be a configTable!
 mat2charList <- function(x, which, rmCol = NULL){
 	if (!any(which)) return(list())
 	x <- x[which, setdiff(colnames(x), rmCol)]

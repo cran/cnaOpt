@@ -119,16 +119,16 @@ DNFbuild <- function(x, outcome, reduce = c("rreduce", "ereduce", "none"), id = 
   if (isTRUE(reduce)) reduce <- "rreduce"
   if (isFALSE(reduce) | is.null(reduce)) reduce <- "none"
   reduce <- match.arg(reduce)
-  # truthTab
-  tt <- attr(x, "truthTab")
-  type <- attr(tt, "type")
+  # configTable
+  ct <- attr(x, "configTable")
+  type <- attr(ct, "type")
   if (type == "fs") stop("DNFbuild() has no implementation of the fs case.")
   xi <- x[[outcome]]
   if (nrow(xi) == 0L) 
     stop("There is no solution for outcome ", outcome, " stored in ", deparse(substitute(x)))
   poss <- attr(xi, "reprodList")
   lhsSc <- reprodAssign(x, outcome, id)
-  d <- as.data.frame(tt)
+  d <- as.data.frame(ct)
   outcomeVar <- if (type == "mv") sub("=.+", "", outcome) else outcome
   d[[outcomeVar]] <- NULL
   stopifnot(nrow(d) == length(lhsSc))
@@ -143,7 +143,7 @@ DNFbuild <- function(x, outcome, reduce = c("rreduce", "ereduce", "none"), id = 
     b <- array(paste0(b, "=", as.matrix(d)), dim(b))
   }
   out <- C_recCharList2char(list(split(b, row(b))), " + ")
-  if (reduce == "rreduce") out <- rreduce(out, tt, full = FALSE)
-  if (reduce == "ereduce") out <- ereduce(out, tt, full = FALSE)
+  if (reduce == "rreduce") out <- rreduce(out, ct, full = FALSE)
+  if (reduce == "ereduce") out <- ereduce(out, ct, full = FALSE)
   out
 }

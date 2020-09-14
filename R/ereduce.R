@@ -1,17 +1,17 @@
 
-ereduce <- function(cond, x = full.tt(cond), full = !missing(x),
+ereduce <- function(cond, x = full.ct(cond), full = !missing(x),
                     simplify2constant = TRUE){
-  if (!inherits(x, "tti")) {
-    if (!inherits(x, "truthTab")) {
-      x <- truthTab(x, rm.dup.factors = FALSE, rm.const.factors = FALSE)
+  if (!inherits(x, "cti")) {
+    if (!inherits(x, "configTable")) {
+      x <- configTable(x, rm.dup.factors = FALSE, rm.const.factors = FALSE)
     }
   }
   if (attr(x, "type") == "fs") stop("Invalid use of data of type 'fs'." )
-  if (full) x <- full.tt(x)
-  tti <- tt.info(x)
-  stopifnot(length(cond) == 1L, nrow(tti) > 1L)
+  if (full) x <- full.ct(x)
+  cti <- ctInfo(x)
+  stopifnot(length(cond) == 1L, nrow(cti) > 1L)
   cond <- noblanks(cond)
-  sc <- tti$scores
+  sc <- cti$scores
   evalCond0 <- drop(qcond_bool(cond, sc))
   if (simplify2constant && all(evalCond0 == evalCond0[1L])) return(as.character(evalCond0[1L]))
   # convert cond to charList format 

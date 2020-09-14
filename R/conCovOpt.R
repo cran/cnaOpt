@@ -1,49 +1,49 @@
 
 conCovOpt <- function(x, outcome = NULL, 
-                      type = if (inherits(x, "truthTab")) attr(x, "type") else "cs", 
+                      type = if (inherits(x, "configTable")) attr(x, "type") else "cs", 
                       maxCombs = 1e7, approx = FALSE, allConCov = FALSE){
   eps = 1e-12
-  tt <- truthTab(x, type = type, rm.dup.factors = FALSE, rm.const.factors = FALSE)
-  tti <- tt.info(tt)
-  responses <- tti$resp_nms
+  ct <- configTable(x, type = type, rm.dup.factors = FALSE, rm.const.factors = FALSE)
+  cti <- ctInfo(ct)
+  responses <- cti$resp_nms
   if (is.null(outcome)){
     outcome <- responses
   } else {
     stopifnot(outcome %in% responses)
   }
-  f <- attr(tt, "n")
+  f <- attr(ct, "n")
 
   out <- vector("list", length(outcome))
   names(out) <- outcome
   for (outc in outcome){
-    out[[outc]] <- .conCovOpt1outcome(tt, tti$scores, f, outc, eps = eps, 
+    out[[outc]] <- .conCovOpt1outcome(ct, cti$scores, f, outc, eps = eps, 
                                       maxCombs = maxCombs, approx = approx, allConCov = allConCov)
   }
-  attr(out, "truthTab") <- tt
+  attr(out, "configTable") <- ct
   class(out) <- "conCovOpt"
   out
 }
 
-.conCovOpt1outcome <- function(tt, sc, f, outcome, eps, maxCombs, approx = FALSE, allConCov = FALSE){
-  type <- attr(tt, "type")
-  x_df <- as.data.frame(tt)
-  y <- sc[, outcome]  ## tt.info() applied twice!!
+.conCovOpt1outcome <- function(ct, sc, f, outcome, eps, maxCombs, approx = FALSE, allConCov = FALSE){
+  type <- attr(ct, "type")
+  x_df <- as.data.frame(ct)
+  y <- sc[, outcome]  ## ctInfo() applied twice!!
   outcomeVar <- if (type == "mv") sub("=.+", "", outcome) else (outcome)
   
   # step 1: grouping wrt lhs-factors --------------------------------------
-  tt_without_outcome <- truthTab(x_df[-match(outcomeVar, names(tt))], type = type,
-                                 rm.dup.factors = FALSE, rm.const.factors = FALSE,
-                                 verbose = FALSE)
-  sc <- tt.info(tt_without_outcome)$scores
-  noGroups <- nrow(tt_without_outcome) == nrow(tt)
+  ct_without_outcome <- configTable(x_df[-match(outcomeVar, names(ct))], type = type,
+  																	rm.dup.factors = FALSE, rm.const.factors = FALSE,
+  																	verbose = FALSE)
+  sc <- ctInfo(ct_without_outcome)$scores
+  noGroups <- nrow(ct_without_outcome) == nrow(ct)
   if (noGroups){
     y_g <- y
     g_freqs <- rep(1L, length(y))
     # u_exoGroups <- seq_along(g_freqs)
-    yUnique <- rep(TRUE, nrow(tt_without_outcome))
+    yUnique <- rep(TRUE, nrow(ct_without_outcome))
   } else {
-    cases_grouped <- unname(attr(tt_without_outcome, "cases"))
-    g_freqs <- attr(tt_without_outcome, "n")
+    cases_grouped <- unname(attr(ct_without_outcome, "cases"))
+    g_freqs <- attr(ct_without_outcome, "n")
     u_exoGroups <- match(as.integer(unlist(cases_grouped)),
                             seq_along(f))
     exoGroups <- C_relist_Int(u_exoGroups, g_freqs)
@@ -52,7 +52,7 @@ conCovOpt <- function(x, outcome = NULL,
   }
 
   # step 2: possible lhs-values --------------------------------------
-  y1 <- rep(NA, nrow(tt_without_outcome))
+  y1 <- rep(NA, nrow(ct_without_outcome))
   y1[yUnique] <- if (noGroups){
     y 
   } else {
@@ -64,9 +64,9 @@ conCovOpt <- function(x, outcome = NULL,
   #data.frame(yUnique, yMatch, yMax, yMin)
   
   obvious <- yUnique & rowAnys(as.matrix(data.frame(yMatch, yMax, yMin)))
-  #cbind(tt_without_outcome, obvious)
+  #cbind(ct_without_outcome, obvious)
 
-  stopifnot(nrow(tt_without_outcome) == length(y_g))
+  stopifnot(nrow(ct_without_outcome) == length(y_g))
   n1 <- length(y_g)
     
   possible <- vector("list", n1)

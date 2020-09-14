@@ -1,5 +1,5 @@
 
-tt.info <- getFromNamespace("tt.info", "cna")
+ctInfo <- getFromNamespace("ctInfo", "cna")
 
 rreduce <- getFromNamespace("rreduce", "cna")
 

@@ -20,7 +20,7 @@ DNFbuild(x, outcome, reduce = c("rreduce", "ereduce", "none"), id = xi$id)
 An object produced by \code{\link{selectMax}}.  
 }
   \item{outcome}{
-A character string specifying \emph{one} outcome in \code{attr(x, "truthTab")}.
+A character string specifying \emph{one} outcome in \code{attr(x, "configTable")}.
 }
   \item{id}{
 An integer referring to the identifier of the targeted con-cov optimum.
@@ -30,7 +30,7 @@ A character string: if \code{"rreduce"} or \code{"ereduce"}, the canonical DNF r
 }
 }
 
-\details{An atomic CNA model (asf) accounts for the behavior of the \code{outcome} in terms of a redundancy-free DNF. \code{reprodAssign} generates the output values such a DNF has to return in order to reach a con-cov optimum stored in an object of class '\code{selectMax}'. If the data stored in \code{attr(x, "truthTab")} is of type \code{"cs"} or \code{"mv"}, \code{DNFbuild} builds a concrete DNF realizing the targeted con-cov optimum. (For data of type \code{"fs"} an error is returned.) If \code{reduce = "rreduce"} (default), \emph{one} (randomly selected) redundancy-free DNF is built using \code{\link{rreduce}}; if \code{reduce = "ereduce"}, \emph{all} redundancy-free DNFs are built using \code{\link{ereduce}}; if \code{reduce = "none"}, the non-reduced canonical DNF is returned.
+\details{An atomic CNA model (asf) accounts for the behavior of the \code{outcome} in terms of a redundancy-free DNF. \code{reprodAssign} generates the output values such a DNF has to return in order to reach a con-cov optimum stored in an object of class '\code{selectMax}'. If the data stored in \code{attr(x, "configTable")} is of type \code{"cs"} or \code{"mv"}, \code{DNFbuild} builds a concrete DNF realizing the targeted con-cov optimum. (For data of type \code{"fs"} an error is returned.) If \code{reduce = "rreduce"} (default), \emph{one} (randomly selected) redundancy-free DNF is built using \code{\link{rreduce}}; if \code{reduce = "ereduce"}, \emph{all} redundancy-free DNFs are built using \code{\link{ereduce}}; if \code{reduce = "none"}, the non-reduced canonical DNF is returned.
 The argument \code{id} allows for selecting a targeted con-cov optimum via its identifier (see examples below).
 }
 
@@ -66,21 +66,21 @@ datMV <- data.frame(
 )
 
 # Apply conCovOpt and selectMax.
-cco2 <- conCovOpt(mvtt(datMV))
+cco2 <- conCovOpt(mvct(datMV))
 best2 <- selectMax(cco2)
 
 # Apply DNFbuild to build one redundancy-free DNF reaching best2.
 (formula1 <- DNFbuild(best2, outcome = "D=3"))
 # formula1 reaches the con-cov score stored in best2 for outcome "D=3".
-condTbl(paste0(formula1, "<-> D=3"), mvtt(datMV))
+condTbl(paste0(formula1, "<-> D=3"), mvct(datMV))
 # Build all redundancy-free DNFs reaching best2.
 DNFbuild(best2, outcome = "D=3", reduce = "ereduce")
 # Any factor value in datMV can be treated as outcome.
 (formula2 <- DNFbuild(best2, outcome =  "E=3"))
-condTbl(paste0(formula2, "<-> E=3"), mvtt(datMV))
+condTbl(paste0(formula2, "<-> E=3"), mvct(datMV))
 # Any con-cov optimum in cco2 can be targeted via its identifier.
 (formula3 <- DNFbuild(best2, outcome =  "E=3", id = 508))
-condTbl(paste0(formula3, "<-> E=3"), mvtt(datMV))
+condTbl(paste0(formula3, "<-> E=3"), mvct(datMV))
 
 
 # Simulated fs data

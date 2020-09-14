@@ -14,13 +14,13 @@ cnaOpt(x, outcome, ..., crit = quote(con * cov), cond = quote(TRUE))
 
 \arguments{
   \item{x}{
-A \code{\link{data.frame}} or \code{\link{truthTab}} of type \code{"cs"} or \code{"mv"}; if \code{x} is of type \code{"mv"}, \code{x} must be a \code{truthTab}.
+A \code{\link{data.frame}} or \code{\link{configTable}} of type \code{"cs"} or \code{"mv"}; if \code{x} is of type \code{"mv"}, \code{x} must be a \code{configTable}.
 }
   \item{outcome}{
 A character string specifying one outcome, i.e. one factor in \code{x}.
 }
   \item{\dots}{
-Additional arguments passed to \code{\link{truthTab}}, for instance \code{type}, \code{rm.dup.factors}, \code{rm.dup.factors}, or \code{case.cutoff}.
+Additional arguments passed to \code{\link{configTable}}, for instance \code{type}, \code{rm.dup.factors}, \code{rm.dup.factors}, or \code{case.cutoff}.
 }
   \item{crit, cond}{
 A quoted expression specifying additional criteria for selecting optimal solutions, passed to \code{\link{selectMax}}.
@@ -30,7 +30,7 @@ A quoted expression specifying additional criteria for selecting optimal solutio
 \details{
 \code{cnaOpt} infers causal models (atomic solution formulas, asf) for the \code{outcome} from data \code{x} that are optimal with respect to the optimality criterion \code{crit} and complying with conditions \code{cond}. Data \code{x} may be crisp-set (\code{"cs"}) or multi-value (\code{"mv"}), but not fuzzy-set (\code{"fs"}). The function first calculates consistency and coverage optima (con-cov optima) for \code{x}, then selects the optimum that is best according to \code{crit} and \code{cond}, builds the canonical disjunctive normal form (DNF) realizing the best optimum and, finally, generates all minimal forms of that canonical DNF. 
 
-Roughly speaking, running \code{cnaOpt} amounts to sequentially executing \code{\link{truthTab}}, \code{\link{conCovOpt}}, \code{\link{selectMax}}, \code{\link{DNFbuild}} and \code{\link{condTbl}}.
+Roughly speaking, running \code{cnaOpt} amounts to sequentially executing \code{\link{configTable}}, \code{\link{conCovOpt}}, \code{\link{selectMax}}, \code{\link{DNFbuild}} and \code{\link{condTbl}}.
 
 }
 
@@ -72,15 +72,15 @@ cnaOpt(dat1, "E", crit = quote(pmin(con, cov)))
 
 
 # Example 3: All logically possible configurations.
-(res_opt3 <- cnaOpt(full.tt(4), "D"))  # All combinations are equally bad.
+(res_opt3 <- cnaOpt(full.ct(4), "D"))  # All combinations are equally bad.
 
 
 # Example 4: Real-life multi-value data, d.pban.
-cnaOpt(mvtt(d.pban), outcome = "PB=1")
-\donttest{cnaOpt(mvtt(d.pban), outcome = "PB=1", crit = quote(pmin(con, cov)))}
-\donttest{cnaOpt(mvtt(d.pban), outcome = "PB=1", cond = quote(con > 0.93))}
-cnaOpt(mvtt(d.pban), outcome = "PB=0")
-cnaOpt(mvtt(d.pban), outcome = "PB=0", cond = quote(con > 0.93))
+cnaOpt(mvct(d.pban), outcome = "PB=1")
+\donttest{cnaOpt(mvct(d.pban), outcome = "PB=1", crit = quote(pmin(con, cov)))}
+\donttest{cnaOpt(mvct(d.pban), outcome = "PB=1", cond = quote(con > 0.93))}
+cnaOpt(mvct(d.pban), outcome = "PB=0")
+cnaOpt(mvct(d.pban), outcome = "PB=0", cond = quote(con > 0.93))
 cnaOpt(d.pban, type = "mv", outcome = "F=2")
 cnaOpt(d.pban, type = "mv", outcome = "F=2", cond = quote(con > 0.75))
 

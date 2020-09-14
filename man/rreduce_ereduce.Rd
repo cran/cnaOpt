@@ -9,8 +9,8 @@
 }
 
 \usage{
-ereduce(cond, x = full.tt(cond), full = !missing(x), simplify2constant = TRUE)
-rreduce(cond, x = full.tt(cond), full = !missing(x), verbose = FALSE, maxiter = 1000,
+ereduce(cond, x = full.ct(cond), full = !missing(x), simplify2constant = TRUE)
+rreduce(cond, x = full.ct(cond), full = !missing(x), verbose = FALSE, maxiter = 1000,
         simplify2constant = TRUE) 
 }
 
@@ -22,7 +22,7 @@ A character string specifying a disjunctive normal form; can be either crisp-set
 \code{truthTab} or \code{data.frame}; can be either crisp-set or multi-value.
 }
   \item{full}{
-Logical; if \code{TRUE} (the default), redundancies are eliminated relative to \code{full.tt(x)}, otherwise relative to \code{x}.
+Logical; if \code{TRUE} (the default), redundancies are eliminated relative to \code{full.ct(x)}, otherwise relative to \code{x}.
 }
   \item{simplify2constant}{
 Logical; if \code{TRUE} (the default), a tautologous or contradictory \code{cond} is reduced to a constant \code{"1"} or \code{"0"}, respectively. If \code{FALSE}, a minimal tautology or contradiction, i.e. \code{"A+a"} or \code{"A*a"}, will result.
@@ -37,7 +37,7 @@ Maximal number of iterations.
 
 \details{
 
-\code{ereduce} and \code{rreduce} eliminate conjuncts and disjuncts from a DNF \code{cond} as long as the consistency and coverage of \code{cond} in data \code{x} does not change, that is, as long as the result of \code{condition(cond, x)} remains the same. The only required argument is \code{cond}. If \code{x} is not provided, redundancies are eliminated relative to \code{full.tt(cond)}. If \code{x} is provided and \code{full = TRUE}, redundancies are eliminated relative to \code{full.tt(x)}. If \code{x} is provided and \code{full = FALSE}, redundancies are eliminated relative to \code{x}.
+\code{ereduce} and \code{rreduce} eliminate conjuncts and disjuncts from a DNF \code{cond} as long as the consistency and coverage of \code{cond} in data \code{x} does not change, that is, as long as the result of \code{condition(cond, x)} remains the same. The only required argument is \code{cond}. If \code{x} is not provided, redundancies are eliminated relative to \code{full.ct(cond)}. If \code{x} is provided and \code{full = TRUE}, redundancies are eliminated relative to \code{full.ct(x)}. If \code{x} is provided and \code{full = FALSE}, redundancies are eliminated relative to \code{x}.
 
 While \code{ereduce} generates all redundancy-free forms of \code{cond}, \code{rreduce} only returns one randomly chosen one. \code{rreduce} is faster than \code{ereduce}, but often incomplete. \code{ereduce}, in a nutshell, searches for minimal hitting sets in \code{cond} preventing \code{cond} from being false in data \code{x}. %the negation of \code{cond} from becoming true.
 
@@ -48,7 +48,7 @@ Redundancy-free disjunctive normal form (DNF).
 }
 
 \seealso{
-\code{\link{full.tt}}, \code{\link{conCovOpt}}, \code{\link{DNFbuild}}.
+\code{\link{full.ct}}, \code{\link{conCovOpt}}, \code{\link{DNFbuild}}.
 }
 
 
@@ -90,9 +90,9 @@ cco2 <- conCovOpt(dat2, "D=3", type="mv")
 best2 <- selectMax(cco2)
 formula2 <- DNFbuild(best2, outcome = "D=3", reduce = FALSE)
 # ereduce
-ereduce(formula2, mvtt(dat2), full = FALSE)
+ereduce(formula2, mvct(dat2), full = FALSE)
 # rreduce
-rreduce(formula2, mvtt(dat2), full = FALSE)
+rreduce(formula2, mvct(dat2), full = FALSE)
 
 
 # Any Boolean expressions.

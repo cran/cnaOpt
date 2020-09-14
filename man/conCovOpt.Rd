@@ -13,7 +13,7 @@ Find consistency and coverage optima for configurational data
 
 \usage{
 conCovOpt(x, outcome = NULL, 
-          type = if (inherits(x, "truthTab")) attr(x, "type") else "cs", 
+          type = if (inherits(x, "configTable")) attr(x, "type") else "cs", 
           maxCombs = 1e+07, approx = FALSE, allConCov = FALSE)
 \method{print}{conCovOpt}(x, ...)
 \method{plot}{conCovOpt}(x, con = 1, cov = 1, ...)
@@ -21,7 +21,7 @@ conCovOpt(x, outcome = NULL,
 
 \arguments{
   \item{x}{
-A \code{\link{data.frame}} or \code{\link{truthTab}}. In the \code{print}- and \code{plot}-method: The output of \code{conCovOpt}.
+A \code{\link{data.frame}} or \code{\link{configTable}}. In the \code{print}- and \code{plot}-method: The output of \code{conCovOpt}.
 }
   \item{outcome}{
 A character vector of one or several factors in \code{x}.
@@ -50,7 +50,7 @@ Prior to actual CNA or QCA analyses, \code{conCovOpt} calculates consistency and
 
 An ordered pair (con, cov) of consistency and coverage scores is a \strong{con-cov optimum} for outcome Y=k in data \code{x} iff it is not excluded (on principled grounds) for an asf of Y=k inferred from \code{x} to reach (con, cov) but excluded to score better on one element of the pair and at least as well on the other.
 
-\code{conCovOpt} calculates con-cov optima by executing the following steps:\enumerate{\item if \code{x} is a data frame, aggregate \code{x} in a \code{truthTab}, \item build exo-groups with constant values in all factors other than the \code{outcome}, \item assign output values to each exo-group that reproduce the behavior of \code{outcome} as closely as possible, \item  calculate con-cov scores for each assignment resulting in step 3, \item eliminate all non-optimal scores.}
+\code{conCovOpt} calculates con-cov optima by executing the following steps:\enumerate{\item if \code{x} is a data frame, aggregate \code{x} in a \code{configTable}, \item build exo-groups with constant values in all factors other than the \code{outcome}, \item assign output values to each exo-group that reproduce the behavior of \code{outcome} as closely as possible, \item  calculate con-cov scores for each assignment resulting in step 3, \item eliminate all non-optimal scores.}
 
 In case of \code{"cs"} and \code{"mv"} data, at least one actual model (asf) inferrable from \code{x} and reaching an optimum's consistency and coverage scores is guaranteed to exist for every con-cov optimum. The function \code{\link{DNFbuild}} can be used to build these optimal models. The same does not hold for \code{"fs"} data. In case of \code{"fs"} data, it merely holds that the existence of a model reaching an optimum's consistency and coverage scores cannot be excluded prior to an actual application of \code{\link{cna}}. 
 
@@ -64,7 +64,7 @@ An object of class 'conCovOpt'. The exo-groups resulting from step 2 are stored 
 %Evtl. paper erwähnen?}
 
 \seealso{
-\code{\link{truthTab}}, \code{\link{selectMax}}, \code{\link{DNFbuild}}
+\code{\link{configTable}}, \code{\link{selectMax}}, \code{\link{DNFbuild}}
 }
 
 \examples{
