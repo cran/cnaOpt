@@ -5,32 +5,45 @@
 }
 
 \description{
-\code{cnaOpt} attempts to find atomic solution formulas (asfs) for a given \code{outcome} (inferred from crisp-set, \code{"cs"}, or multi-value, \code{"mv"}, data) that are optimal with respect to consistency and coverage. 
+\code{cnaOpt} attempts to find atomic solution formulas (asfs) for a given \code{outcome} (inferred from crisp-set, \code{"cs"}, or multi-value, \code{"mv"}, data) that are optimal with respect to the model fit parameters consistency and coverage (cf. Baumgartner and Ambuehl 2021). 
 }
 
 \usage{
-cnaOpt(x, outcome, ..., crit = quote(con * cov), cond = quote(TRUE))
+cnaOpt(x, outcome, ..., reduce = c("ereduce", "rreduce", "none"), 
+       niter = 1, crit = quote(con * cov), cond = quote(TRUE), 
+			 approx = FALSE, maxCombs = 1e7)
 }
 
 \arguments{
   \item{x}{
-A \code{\link{data.frame}} or \code{\link{configTable}} of type \code{"cs"} or \code{"mv"}; if \code{x} is of type \code{"mv"}, \code{x} must be a \code{configTable}.
+A \code{\link{data.frame}} or \code{\link{configTable}} of type \code{"cs"} or \code{"mv"}.
 }
   \item{outcome}{
 A character string specifying one outcome, i.e. one factor in \code{x}.
 }
   \item{\dots}{
-Additional arguments passed to \code{\link{configTable}}, for instance \code{type}, \code{rm.dup.factors}, \code{rm.dup.factors}, or \code{case.cutoff}.
+Additional arguments passed to \code{\link{configTable}}, for instance \code{rm.dup.factors}, \code{rm.dup.factors}, or \code{case.cutoff}.
+}
+  \item{reduce}{
+A character string: if \code{"rreduce"} or \code{"ereduce"}, the canonical DNF realizing the con-cov optimum is freed of redundancies using \code{\link{rreduce}} (possibly repeatedly, see \code{niter}) or \code{\link{ereduce}}, respectively; if \code{"none"}, the unreduced canonical DNF is returned. \code{reduce=TRUE} is interpreted as \code{"rreduce"}, \code{reduce = FALSE} and \code{reduce = NULL} as \code{"none"}.
+}
+  \item{niter}{
+An integer value indicating the number of repetitive applications of \code{\link{rreduce}}. 
+\code{niter} will be ignored (with a warning) if \code{reduce} is not equal to \code{"rreduce"}. 
+Note that repeated applications may yield identical solutions and that duplicate solutions are eliminiated, so that the number of resulting solutions can be smaller than \code{niter}.
 }
   \item{crit, cond}{
-A quoted expression specifying additional criteria for selecting optimal solutions, passed to \code{\link{selectMax}}.
+Quoted expressions specifying additional criteria for selecting optimal solutions, passed to \code{\link{selectMax}}.
+}
+  \item{approx, maxCombs}{
+As in \code{\link{conCovOpt}}.  
 }
 }
 
 \details{
-\code{cnaOpt} infers causal models (atomic solution formulas, asf) for the \code{outcome} from data \code{x} that are optimal with respect to the optimality criterion \code{crit} and complying with conditions \code{cond}. Data \code{x} may be crisp-set (\code{"cs"}) or multi-value (\code{"mv"}), but not fuzzy-set (\code{"fs"}). The function first calculates consistency and coverage optima (con-cov optima) for \code{x}, then selects the optimum that is best according to \code{crit} and \code{cond}, builds the canonical disjunctive normal form (DNF) realizing the best optimum and, finally, generates all minimal forms of that canonical DNF. 
+\code{cnaOpt} implements a procedure introduced in Baumgartner and Ambuehl (2021). It infers causal models (atomic solution formulas, asf) for the \code{outcome} from data \code{x} that are optimal with respect to the optimality criterion \code{crit} and complying with conditions \code{cond}. Data \code{x} may be crisp-set (\code{"cs"}) or multi-value (\code{"mv"}), but not fuzzy-set (\code{"fs"}). The function first calculates consistency and coverage optima (con-cov optima) for \code{x}, then selects the optimum that is best according to \code{crit} and \code{cond}, builds the canonical disjunctive normal form (DNF) realizing the best optimum and, finally, generates all minimal forms of that canonical DNF. Roughly speaking, running \code{cnaOpt} amounts to sequentially executing \code{\link{configTable}}, \code{\link{conCovOpt}}, \code{\link{selectMax}}, \code{\link{DNFbuild}} and \code{\link{condTbl}}.
 
-Roughly speaking, running \code{cnaOpt} amounts to sequentially executing \code{\link{configTable}}, \code{\link{conCovOpt}}, \code{\link{selectMax}}, \code{\link{DNFbuild}} and \code{\link{condTbl}}.
+In the default setting, \code{cnaOpt} attempts to build all optimal solutions using \code{\link{ereduce}}. But that may be too computationally demanding because the space of optimal solutions can be very large. If the argument \code{reduce} is set to \code{"rreduce"}, \code{cnaOpt} builds one arbitrarily selected optimal solution, which typically terminates quickly. By giving the argument \code{niter} a non-default value, say, 20, the process of selecting one optimal solution under \code{reduce = "rreduce"} is repeated 20 times. As the same solutions will be generated on some iterations and duplicates are not returned, the output may contain less models than the value given to \code{niter}. If \code{reduce} is not set to \code{"rreduce"}, \code{niter} is ignored with a warning.
 
 }
 
@@ -42,6 +55,10 @@ Roughly speaking, running \code{cnaOpt} amounts to sequentially executing \code{
 \code{\link{cna}}, \code{\link{conCovOpt}}
 }
 
+\references{
+Baumgartner, Michael and Mathias Ambuehl. 2021. \dQuote{Optimizing Consistency and Coverage in Configurational Causal Modeling.} \emph{Sociological Methods & Research}.\cr doi:10.1177/0049124121995554. 
+}
+
 \examples{
 # Example 1: Real-life crisp-set data, d.educate.
 (res_opt1 <- cnaOpt(d.educate, "E"))
@@ -51,7 +68,6 @@ Roughly speaking, running \code{cnaOpt} amounts to sequentially executing \code{
 library(dplyr)
 conCovOpt(d.educate, "E") \%>\% selectMax \%>\% DNFbuild("E", reduce = "ereduce") \%>\% 
   paste("<-> E") \%>\% condTbl(d.educate)
-
 
 # Example 2: Simulated crisp-set data.
 dat1 <- data.frame(
@@ -67,21 +83,35 @@ dat1 <- data.frame(
 
 # Change the optimality criterion.
 cnaOpt(dat1, "E", crit = quote(pmin(con, cov)))
-# Impose an additional condition.
+# Build all con-cov optima with consistency above 0.9.
 \donttest{cnaOpt(dat1, "E", cond = quote(con >= 0.9))}
-
+# Different values of the reduce argument.
+cnaOpt(dat1, "E", reduce = "none") # canonical DNF
+cnaOpt(dat1, "E", reduce = "rreduce") # one randomly drawn optimal solution
+# Iterate random solution generation 10 times.
+cnaOpt(dat1, "E", reduce = "rreduce", niter = 10) 
 
 # Example 3: All logically possible configurations.
 (res_opt3 <- cnaOpt(full.ct(4), "D"))  # All combinations are equally bad.
 
-
 # Example 4: Real-life multi-value data, d.pban.
-cnaOpt(mvct(d.pban), outcome = "PB=1")
-\donttest{cnaOpt(mvct(d.pban), outcome = "PB=1", crit = quote(pmin(con, cov)))}
-\donttest{cnaOpt(mvct(d.pban), outcome = "PB=1", cond = quote(con > 0.93))}
-cnaOpt(mvct(d.pban), outcome = "PB=0")
-cnaOpt(mvct(d.pban), outcome = "PB=0", cond = quote(con > 0.93))
-cnaOpt(d.pban, type = "mv", outcome = "F=2")
-cnaOpt(d.pban, type = "mv", outcome = "F=2", cond = quote(con > 0.75))
+cnaOpt(d.pban, outcome = "PB=1")
+\donttest{cnaOpt(d.pban, outcome = "PB=1", crit = quote(pmin(con, cov)))}
+\donttest{cnaOpt(d.pban, outcome = "PB=1", cond = quote(con > 0.93))}
+cnaOpt(d.pban, outcome = "PB=0")
+cnaOpt(d.pban, outcome = "PB=0", cond = quote(con > 0.93))
+cnaOpt(d.pban, outcome = "F=2")
+cnaOpt(d.pban, outcome = "F=2", cond = quote(con > 0.75))
 
+# Example 5: High computational demand.
+dat2 <- configTable(d.performance[,1:8], frequency = d.performance$frequency)
+\dontrun{cnaOpt(dat2, outcome = "SP")} # error because too computationally demanding
+# The following call does not terminate because of reduce = "ereduce".
+\dontrun{cnaOpt(dat2, outcome = "SP", approx = TRUE)}
+# Produce one (randomly selected) optimal solution using reduce = "rreduce".
+cnaOpt(dat2, outcome = "SP",  approx = TRUE, reduce = "rreduce")
+# Iterate the previous call 10 times.
+\donttest{cnaOpt(dat2, outcome = "SP", approx = TRUE, reduce = "rreduce", niter = 10)}
+# Alternatively, use ereduce for minimization but introduce a case.cutoff.
+\donttest{cnaOpt(dat2, outcome = "SP", case.cutoff = 10)}
 }

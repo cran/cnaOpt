@@ -54,7 +54,8 @@ multipleMax <- function(x, outcome){
 # ------------------------------------------------------------------------------
 
 # findOutcomes
-findOutcomes <- function(x, con = 1, cov = 1, ...){
+findOutcomes <- function(x, con = 1, cov = 1, rm.dup.factors = FALSE, rm.const.factors = FALSE, ...){
+  x <- configTable(x, rm.dup.factors = rm.dup.factors, rm.const.factors = rm.dup.factors)
   con_threshold <- con
   cov_threshold <- cov
   b <- conCovOpt(x, ...)

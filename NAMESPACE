@@ -1,5 +1,5 @@
 export(conCovOpt, selectMax, multipleMax, findOutcomes, reprodAssign, DNFbuild,
-       cnaOpt, rreduce, ereduce)
+       cnaOpt, ereduce)
 
 import(cna)
 import(matrixStats)

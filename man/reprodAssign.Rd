@@ -7,7 +7,7 @@ Build disjunctive normal forms realizing con-cov optima
 }
 
 \description{
-\code{reprodAssign} generates the output values of a disjunctive normal form (DNF) reaching a con-cov optimum. \code{DNFbuild} builds a DNF realizing a targeted con-cov optimum; it only works for crisp-set and multi-value data.
+\code{reprodAssign} generates the output values of a disjunctive normal form (DNF) reaching a con-cov optimum. \code{DNFbuild} builds a DNF realizing a targeted con-cov optimum; it only works for crisp-set and multi-value data (cf. Baumgartner and Ambuehl 2021).
 }
 
 \usage{
@@ -30,7 +30,7 @@ A character string: if \code{"rreduce"} or \code{"ereduce"}, the canonical DNF r
 }
 }
 
-\details{An atomic CNA model (asf) accounts for the behavior of the \code{outcome} in terms of a redundancy-free DNF. \code{reprodAssign} generates the output values such a DNF has to return in order to reach a con-cov optimum stored in an object of class '\code{selectMax}'. If the data stored in \code{attr(x, "configTable")} is of type \code{"cs"} or \code{"mv"}, \code{DNFbuild} builds a concrete DNF realizing the targeted con-cov optimum. (For data of type \code{"fs"} an error is returned.) If \code{reduce = "rreduce"} (default), \emph{one} (randomly selected) redundancy-free DNF is built using \code{\link{rreduce}}; if \code{reduce = "ereduce"}, \emph{all} redundancy-free DNFs are built using \code{\link{ereduce}}; if \code{reduce = "none"}, the non-reduced canonical DNF is returned.
+\details{An atomic CNA model (asf) accounts for the behavior of the \code{outcome} in terms of a redundancy-free DNF. \code{reprodAssign} generates the output values such a DNF has to return in order to reach a con-cov optimum stored in an object of class '\code{selectMax}'. If the data stored in \code{attr(x, "configTable")} are crisp-set or multi-value, \code{DNFbuild} builds a concrete DNF realizing the targeted con-cov optimum. (For fuzzy-set data an error is returned.) If \code{reduce = "rreduce"} (default), \emph{one} (randomly selected) redundancy-free DNF is built using \code{\link{rreduce}}; if \code{reduce = "ereduce"}, \emph{all} redundancy-free DNFs are built using \code{\link{ereduce}}; if \code{reduce = "none"}, the non-reduced canonical DNF is returned.
 The argument \code{id} allows for selecting a targeted con-cov optimum via its identifier (see examples below).
 }
 
@@ -44,6 +44,13 @@ The argument \code{id} allows for selecting a targeted con-cov optimum via its i
 \code{\link{conCovOpt}}, \code{\link{selectMax}}, \code{\link{condTbl}}, \code{\link{reprodAssign}}
 }
 
+
+
+\references{
+Baumgartner, Michael and Mathias Ambuehl. 2021. \dQuote{Optimizing Consistency and Coverage in Configurational Causal Modeling.} \emph{Sociological Methods & Research}.\cr doi:10.1177/0049124121995554. 
+}
+
+
 \examples{
 # CS data, d.educate
 cco1 <- conCovOpt(d.educate)
@@ -55,7 +62,6 @@ DNFbuild(best1, outcome =  "E", reduce = "ereduce") # all redundancy-free DNFs
 DNFbuild(best1, outcome =  "E", reduce = "rreduce") # one redundancy-free DNF
 DNFbuild(best1, outcome =  "E", reduce = "none") # canonical DNF
 
-
 # Simulated mv data
 datMV <- data.frame(
   A = c(3,2,1,1,2,3,2,2,2,1,1,2,3,2,2,2,1,2,3,3,3,1,1,1,3,1,2,1,2,3,3,2,2,2,1,2,2,3,2,1,2,1,3,3),
@@ -66,22 +72,21 @@ datMV <- data.frame(
 )
 
 # Apply conCovOpt and selectMax.
-cco2 <- conCovOpt(mvct(datMV))
-best2 <- selectMax(cco2)
+(cco2 <- conCovOpt(datMV))
+(best2 <- selectMax(cco2))
 
 # Apply DNFbuild to build one redundancy-free DNF reaching best2.
 (formula1 <- DNFbuild(best2, outcome = "D=3"))
 # formula1 reaches the con-cov score stored in best2 for outcome "D=3".
-condTbl(paste0(formula1, "<-> D=3"), mvct(datMV))
+condTbl(paste0(formula1, "<-> D=3"), datMV)
 # Build all redundancy-free DNFs reaching best2.
 DNFbuild(best2, outcome = "D=3", reduce = "ereduce")
 # Any factor value in datMV can be treated as outcome.
 (formula2 <- DNFbuild(best2, outcome =  "E=3"))
-condTbl(paste0(formula2, "<-> E=3"), mvct(datMV))
+condTbl(paste0(formula2, "<-> E=3"), datMV)
 # Any con-cov optimum in cco2 can be targeted via its identifier.
 (formula3 <- DNFbuild(best2, outcome =  "E=3", id = 508))
-condTbl(paste0(formula3, "<-> E=3"), mvct(datMV))
-
+condTbl(paste0(formula3, "<-> E=3"), datMV)
 
 # Simulated fs data
 datFS <- data.frame(
@@ -93,8 +98,8 @@ datFS <- data.frame(
 )
 
 # Apply conCovOpt and selectMax.
-cco3 <- conCovOpt(datFS, outcome = "E", type = "fs", allConCov = TRUE)
-best3 <- selectMax(cco3)
+(cco3 <- conCovOpt(datFS, outcome = "E", allConCov = TRUE))
+(best3 <- selectMax(cco3))
 
 # Apply reprodAssign.
 reprodAssign(best3, outcome = "E")
@@ -103,5 +108,4 @@ reprodAssign(best3, outcome = "E", id = 252)
 
 # DNFbuild does not work for fs data; it generates an error.
 try(DNFbuild(best3, outcome = "E"))
-
 }

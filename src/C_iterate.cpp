@@ -1,8 +1,8 @@
-#include <Rcpp.h>
-using namespace Rcpp;
 
-typedef ListOf<NumericVector> dblList; 
-typedef std::vector<NumericVector::iterator> dblIteratorList;
+#include <Rcpp.h>
+#include "typedefs.h"
+
+using namespace Rcpp;
 
 // show() for dblIteratorList & std::vector<double>
 void show(dblIteratorList x){

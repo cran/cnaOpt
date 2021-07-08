@@ -3,13 +3,21 @@
 #   outcome     Name of the outcome (A column in x)
 #   ...         Passed to configTable
 #   crit, cond  Passed to selectMax
-cnaOpt <- function(x, outcome, ..., crit = quote(con * cov), cond = quote(TRUE)){
+cnaOpt <- function(x, outcome, ..., reduce = c("ereduce", "rreduce", "none"), 
+									 niter = 1, crit = quote(con * cov), cond = quote(TRUE), 
+									 approx = FALSE, maxCombs = 1e7){
   time.init <- Sys.time()
   ct <- configTable(x, ...)
+	if (attr(ct, "type") == "fs") 
+		stop("cnaOpt() has no implementation of the fs case.")  
   outcomeVar <- if (attr(ct, "type") == "mv") sub("=.+", "", outcome) else (outcome)
-  stopifnot(outcomeVar %in% names(ct))
+  if (!(outcomeVar %in% names(ct)) || length(outcomeVar) != 1)
+  	stop("Invalid specification of ", dQuote("outcome"))
   # Calculate con-cov optima for outcome
-  cco <- conCovOpt(ct, outcome) 
+  cco <- conCovOpt(ct, outcome, approx = approx, maxCombs = maxCombs) 
+  if (nrow(cco[[outcome]]) == 0 ||
+  	  !any(is.finite(cco[[outcome]]$con) & is.finite(cco[[outcome]]$cov))) 
+  	stop("conCovOpt() did not return valid consistency and coverage values.")
   # Calculate the con-cov maximum for outcome and scores
   best <- selectMax(cco, crit = crit, cond = cond)
   scores_best <- as.vector(reprodAssign(best, outcome = outcome))
@@ -17,12 +25,36 @@ cnaOpt <- function(x, outcome, ..., crit = quote(con * cov), cond = quote(TRUE))
   # get cond and cond_neg
 	cond <- mat2charList(ct, scores_best == 1L, outcomeVar)
 	cond_neg <- mat2charList(ct, scores_best == 0L, outcomeVar)
-  
-  # MB's minization procedure
-  mhs <- MBproc(cond, cond_neg, ctInfo(ct)$sc)
-  
-  # Formulate into strings
-  outStr <- C_mconcat(mhs, sep = "+")
+
+	# reduction procedure, depending on arg reduce  
+  if (isTRUE(reduce)) 
+      reduce <- "rreduce"
+  if (isFALSE(reduce) | is.null(reduce)) 
+      reduce <- "none"	
+	reduce <- match.arg(reduce)
+	if (!missing(niter) && reduce != "rreduce")
+		warning(sQuote("niter"), " is ignored, as reduce!=\"rreduce\"")
+	if (reduce == "ereduce"){
+		mhs <- MBproc(cond, cond_neg, ctInfo(ct)$sc) # MB's minization procedure
+		outStr <- C_mconcat(mhs, sep = "+")           # Formulate into strings
+	} else {
+		outStr <- paste0(C_mconcat(cond, "*"), collapse = "+")
+		if (reduce == "rreduce"){
+			if (niter == 1){
+				outStr <- rreduce(outStr, 
+													x = ct, full = FALSE,
+													simplify2constant = FALSE)
+			} else if (niter>1){
+				# repeated attempts with rreduce()
+				rred_attempts <- replicate(niter, 
+						rreduce(outStr, x = ct, full = FALSE,
+										simplify2constant = FALSE),
+					simplify = TRUE)
+				dups <- duplicated(stdCond(rred_attempts))
+				outStr <- rred_attempts[!dups]
+			}
+		}
+	}
   if (length(outStr)) outStr <- paste0(outStr, "<->", outcome)
   class(outStr) <- c("stdAtomic", "character")
   nsol <- length(outStr)
@@ -40,6 +72,7 @@ cnaOpt <- function(x, outcome, ..., crit = quote(con * cov), cond = quote(TRUE))
                    scores = scores_best,
                    timing = Sys.time() - time.init,
                    class = c("cnaOpt", "condTbl", "data.frame"))
+  rownames(out) <- NULL
   out
 }
 
@@ -91,13 +124,12 @@ minimalHittingSets <- function(x){
   repeat {
     i <- i+1L
     cand <- combn(elements, i, simplify = FALSE)
-    toremove <- colAnys(OUTER(cand, sol, contains))
+    toremove <- C_m_contains_one_of(cand, sol)
     if (all(toremove)) break
     cand <- cand[!toremove]
-    ok <- colAlls(lengths(OUTER(cand, x, intersect)) > 0)
+    ok <- C_m_intersects_with_all(cand, x)
     sol <- c(sol, cand[ok])
     if (i >= l) break
   }
   sol
 } 
-

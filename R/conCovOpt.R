@@ -1,9 +1,8 @@
 
-conCovOpt <- function(x, outcome = NULL, 
-                      type = if (inherits(x, "configTable")) attr(x, "type") else "cs", 
-                      maxCombs = 1e7, approx = FALSE, allConCov = FALSE){
-  eps = 1e-12
-  ct <- configTable(x, type = type, rm.dup.factors = FALSE, rm.const.factors = FALSE)
+conCovOpt <- function(x, outcome = NULL, ..., rm.dup.factors = FALSE, rm.const.factors = FALSE,
+											maxCombs = 1e7, approx = FALSE, allConCov = FALSE){
+  eps <- 1e-12
+  ct <- configTable(x, ..., rm.dup.factors = rm.dup.factors, rm.const.factors = rm.dup.factors)
   cti <- ctInfo(ct)
   responses <- cti$resp_nms
   if (is.null(outcome)){
@@ -27,28 +26,29 @@ conCovOpt <- function(x, outcome = NULL,
 .conCovOpt1outcome <- function(ct, sc, f, outcome, eps, maxCombs, approx = FALSE, allConCov = FALSE){
   type <- attr(ct, "type")
   x_df <- as.data.frame(ct)
-  y <- sc[, outcome]  ## ctInfo() applied twice!!
+  y <- sc[, outcome] 
   outcomeVar <- if (type == "mv") sub("=.+", "", outcome) else (outcome)
   
   # step 1: grouping wrt lhs-factors --------------------------------------
-  ct_without_outcome <- configTable(x_df[-match(outcomeVar, names(ct))], type = type,
-  																	rm.dup.factors = FALSE, rm.const.factors = FALSE,
-  																	verbose = FALSE)
+  ct_without_outcome <- ct[-match(outcomeVar, names(ct)), 
+  												 rm.dup.factors = FALSE, rm.const.factors = FALSE]
   sc <- ctInfo(ct_without_outcome)$scores
   noGroups <- nrow(ct_without_outcome) == nrow(ct)
   if (noGroups){
     y_g <- y
     g_freqs <- rep(1L, length(y))
-    # u_exoGroups <- seq_along(g_freqs)
     yUnique <- rep(TRUE, nrow(ct_without_outcome))
+    ff <- C_relist_Int(f, g_freqs)
   } else {
-    cases_grouped <- unname(attr(ct_without_outcome, "cases"))
-    g_freqs <- attr(ct_without_outcome, "n")
-    u_exoGroups <- match(as.integer(unlist(cases_grouped)),
-                            seq_along(f))
-    exoGroups <- C_relist_Int(u_exoGroups, g_freqs)
+  	cx <- do.call(paste, c(as.data.frame(ct)[-match(outcomeVar, names(ct))], 
+  												 list(sep = "\r")))
+		cx <- as.integer(factor(cx, levels = unique(cx)))
+		g_freqs <- tabulate(cx, max(cx))
+		u_exoGroups <- seq_along(cx)[order(cx)]
+		exoGroups <- C_relist_Int(u_exoGroups, g_freqs)
     y_g <- relist1(y[u_exoGroups], g_freqs)
     yUnique <- vapply(y_g, dplyr::n_distinct, integer(1)) == 1L
+  	ff <- C_relist_Int(f[u_exoGroups], g_freqs)
   }
 
   # step 2: possible lhs-values --------------------------------------
@@ -65,8 +65,6 @@ conCovOpt <- function(x, outcome = NULL,
   
   obvious <- yUnique & rowAnys(as.matrix(data.frame(yMatch, yMax, yMin)))
   #cbind(ct_without_outcome, obvious)
-
-  stopifnot(nrow(ct_without_outcome) == length(y_g))
   n1 <- length(y_g)
     
   possible <- vector("list", n1)
@@ -102,8 +100,10 @@ conCovOpt <- function(x, outcome = NULL,
   #possible
   n_reprodList <- round(product(lengths(possible)))
   if (n_reprodList > maxCombs){
-    warning(sprintf("Outcome %s: n_reprodList (=%4.2e) is larger than maxCombs (=%4.2e)",
-                    outcome, n_reprodList, maxCombs), call. = FALSE)
+    warning(sprintf("Outcome %s: n_reprodList (=%4.2e) exceeds maxCombs (=%4.2e)",
+                    outcome, n_reprodList, maxCombs), " - no con and cov values are returned.\n",
+    				"(you may increase ", sQuote("maxCombs"), ", but calculations could take long...)", 
+    				call. = FALSE)
     out <- data.frame(con = numeric(0), cov = numeric(0), id = integer(0))
     attr(out, "reprodList") <- possible
     attr(out, "exoGroups") <- if (noGroups) seq_along(g_freqs) else exoGroups
@@ -111,7 +111,6 @@ conCovOpt <- function(x, outcome = NULL,
   }
 
   # step 3: preparing structures for expanding --------------------------------
-  ff <- C_relist_Int(if (noGroups) f else f[u_exoGroups], g_freqs)
   s_f <- vapply(ff, sum, integer(1))
   Sx_base <- as.vector(vapply(possible, function(x) as.numeric(x[1]), numeric(1)) %*% s_f)
                          

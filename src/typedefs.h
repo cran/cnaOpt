@@ -4,3 +4,5 @@ using namespace Rcpp;
 
 typedef ListOf<NumericVector> dblList; 
 typedef std::vector<NumericVector::iterator> dblIteratorList;
+
+typedef ListOf<CharacterVector> charList;

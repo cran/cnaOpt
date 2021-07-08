@@ -1,2 +1,11 @@
+Changes in cnaOpt 0.4.0 (2021-07-08)
+	* cnaOpt(), conCovOpt() and other functions: Type of data is now identified automatically, according to the amendment introduced in package cna's version 3.2.0.
+	* New arguments in cnaOpt(): reduce, niter, approx, maxCombs.
+	* conCovOpt() and findOutcomes() have new arguments rm.dup.factors and rm.const.factors.
+	* Some computational improvements and bug fixes.
+
+Changes in cnaOpt 0.3.0 (2021-05-31, not submitted to CRAN)
+	* rreduce() is now imported from package cna.
+
 Changes in cnaOpt 0.2.0 (2020-09-14)
 	* Account for the renaming of function and class 'truthTab' as 'configTable' made in package cna 3.0.0.

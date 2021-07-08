@@ -5,3 +5,11 @@ C_iterate <- function(dx, dminxy, Sx_base, Sy, verbose = FALSE) {
     .Call(`_cnaOpt_C_iterate`, dx, dminxy, Sx_base, Sy, verbose)
 }
 
+C_m_intersects_with_all <- function(x, y) {
+    .Call(`_cnaOpt_C_m_intersects_with_all`, x, y)
+}
+
+C_m_contains_one_of <- function(x, y) {
+    .Call(`_cnaOpt_C_m_contains_one_of`, x, y)
+}
+

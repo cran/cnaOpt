@@ -21,9 +21,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// C_m_intersects_with_all
+LogicalVector C_m_intersects_with_all(charList x, charList y);
+RcppExport SEXP _cnaOpt_C_m_intersects_with_all(SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< charList >::type x(xSEXP);
+    Rcpp::traits::input_parameter< charList >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(C_m_intersects_with_all(x, y));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_m_contains_one_of
+LogicalVector C_m_contains_one_of(charList x, charList y);
+RcppExport SEXP _cnaOpt_C_m_contains_one_of(SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< charList >::type x(xSEXP);
+    Rcpp::traits::input_parameter< charList >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(C_m_contains_one_of(x, y));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_cnaOpt_C_iterate", (DL_FUNC) &_cnaOpt_C_iterate, 5},
+    {"_cnaOpt_C_m_intersects_with_all", (DL_FUNC) &_cnaOpt_C_m_intersects_with_all, 2},
+    {"_cnaOpt_C_m_contains_one_of", (DL_FUNC) &_cnaOpt_C_m_contains_one_of, 2},
     {NULL, NULL, 0}
 };
 
