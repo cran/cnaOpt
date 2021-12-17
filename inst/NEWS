@@ -1,3 +1,11 @@
+Changes in cnaOpt 0.5.0 (2021-12-17)
+	* selectMax(): Improved handling of multiple optima - as a consequence, the function multipleMax() and the argument allConCov in conCovOpt() are now obsolete (but kept for backward compatibility).
+	* New argument warn in selectMax().
+	* New argument maxCombs in ereduce() and DNFbuild().
+	* New default reduce="ereduce" instead of reduce="rreduce" in DNFbuild().
+	* ereduce(): Improved computational efficiency.
+	* conCovOpt(): Reduced memory consumption.
+
 Changes in cnaOpt 0.4.0 (2021-07-08)
 	* cnaOpt(), conCovOpt() and other functions: Type of data is now identified automatically, according to the amendment introduced in package cna's version 3.2.0.
 	* New arguments in cnaOpt(): reduce, niter, approx, maxCombs.

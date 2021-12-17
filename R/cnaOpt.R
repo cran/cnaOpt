@@ -10,7 +10,8 @@ cnaOpt <- function(x, outcome, ..., reduce = c("ereduce", "rreduce", "none"),
   ct <- configTable(x, ...)
 	if (attr(ct, "type") == "fs") 
 		stop("cnaOpt() has no implementation of the fs case.")  
-  outcomeVar <- if (attr(ct, "type") == "mv") sub("=.+", "", outcome) else (outcome)
+	if (outcome != tolower(outcome)) outcome <- toupper(outcome)
+  outcomeVar <- if (attr(ct, "type") == "mv") sub("=.+", "", outcome) else toupper(outcome)
   if (!(outcomeVar %in% names(ct)) || length(outcomeVar) != 1)
   	stop("Invalid specification of ", dQuote("outcome"))
   # Calculate con-cov optima for outcome
@@ -19,57 +20,62 @@ cnaOpt <- function(x, outcome, ..., reduce = c("ereduce", "rreduce", "none"),
   	  !any(is.finite(cco[[outcome]]$con) & is.finite(cco[[outcome]]$cov))) 
   	stop("conCovOpt() did not return valid consistency and coverage values.")
   # Calculate the con-cov maximum for outcome and scores
-  best <- selectMax(cco, crit = crit, cond = cond)
-  scores_best <- as.vector(reprodAssign(best, outcome = outcome))
-  
-  # get cond and cond_neg
-	cond <- mat2charList(ct, scores_best == 1L, outcomeVar)
-	cond_neg <- mat2charList(ct, scores_best == 0L, outcomeVar)
-
-	# reduction procedure, depending on arg reduce  
-  if (isTRUE(reduce)) 
-      reduce <- "rreduce"
-  if (isFALSE(reduce) | is.null(reduce)) 
-      reduce <- "none"	
-	reduce <- match.arg(reduce)
-	if (!missing(niter) && reduce != "rreduce")
-		warning(sQuote("niter"), " is ignored, as reduce!=\"rreduce\"")
-	if (reduce == "ereduce"){
-		mhs <- MBproc(cond, cond_neg, ctInfo(ct)$sc) # MB's minization procedure
-		outStr <- C_mconcat(mhs, sep = "+")           # Formulate into strings
-	} else {
-		outStr <- paste0(C_mconcat(cond, "*"), collapse = "+")
-		if (reduce == "rreduce"){
-			if (niter == 1){
-				outStr <- rreduce(outStr, 
-													x = ct, full = FALSE,
-													simplify2constant = FALSE)
-			} else if (niter>1){
-				# repeated attempts with rreduce()
-				rred_attempts <- replicate(niter, 
-						rreduce(outStr, x = ct, full = FALSE,
-										simplify2constant = FALSE),
-					simplify = TRUE)
-				dups <- duplicated(stdCond(rred_attempts))
-				outStr <- rred_attempts[!dups]
+  best <- selectMax(cco, crit = crit, cond = cond, warn = FALSE)
+  if (nrow(best[[1]]) > 0){
+	  scores_best <- reprodAssign(best, outcome = outcome)
+	  outCond <- list()
+	
+	  for (i in seq_len(ncol(scores_best))){
+	 	  # get cond and cond_neg
+	  	sc_best_i <- scores_best[, i]
+			cond <- mat2charList(ct, sc_best_i == 1L, outcomeVar)
+			cond_neg <- mat2charList(ct, sc_best_i == 0L, outcomeVar)
+		
+			# reduction procedure, depending on arg reduce  
+		  if (isTRUE(reduce)) 
+		      reduce <- "rreduce"
+		  if (isFALSE(reduce) | is.null(reduce)) 
+		      reduce <- "none"	
+			reduce <- match.arg(reduce)
+			if (!missing(niter) && reduce != "rreduce")
+				warning(sQuote("niter"), " is ignored, as reduce!=\"rreduce\"")
+			if (reduce == "ereduce"){
+				mhs <- MBproc(cond, cond_neg, ctInfo(ct)$sc, # MB's minization procedure
+											maxCombs = maxCombs) 
+				outStr <- C_mconcat(mhs, sep = "+")          # Formulate into strings
+			} else {
+				outStr <- paste0(C_mconcat(cond, "*"), collapse = "+")
+				if (reduce == "rreduce"){
+					outStr <- rreduce(outStr, x = ct, niter = niter, full = FALSE,
+														simplify2constant = FALSE)
+				}
 			}
-		}
-	}
-  if (length(outStr)) outStr <- paste0(outStr, "<->", outcome)
-  class(outStr) <- c("stdAtomic", "character")
-  nsol <- length(outStr)
+			outCond[[i]] <- outStr
+	  }
+	  ll <- lengths(outCond)
+	  outCond <- do.call(c, outCond)
+  }
+  else {
+  	scores_best <- matrix(numeric(0), nrow = nrow(ct), ncol = 0)
+  	outCond <- character(0)
+  	ll <- integer(0)
+  }
+	
+  if (length(outCond)) outCond <- paste0(outCond, "<->", outcome)
+  class(outCond) <- c("stdAtomic", "character")
+  nsol <- length(outCond)
 
   # Output
   out <- data.frame(outcome = structure(rep(outcome, nsol), class = c("outcomeString", "character")),
-                    condition = outStr,
-                    consistency = best[[outcome]]$con,
-                    coverage = best[[outcome]]$cov,
-                    complexity = lengths(gregexpr("[\\+\\*]", outStr)) + 1L,
+                    condition = outCond,
+                    consistency = rep(best[[outcome]]$con, ll), 
+                    coverage = rep(best[[outcome]]$cov, ll),
+                    complexity = lengths(gregexpr("[\\+\\*]", outCond)) + 1L,
                     stringsAsFactors = FALSE)
   out <- out[order(out$complexity), , drop = FALSE]
   out <- structure(out,
                    ct = ct,
-                   scores = scores_best,
+  								 scores = scores_best,
                    timing = Sys.time() - time.init,
                    class = c("cnaOpt", "condTbl", "data.frame"))
   rownames(out) <- NULL
@@ -113,23 +119,3 @@ OUTER <- function(x, y, FUN, ...){
 
 # simple auxiliary function
 contains <- function(x, y) all(y %in% x)
-
-# Find all minimal hitting sets for a collection of sets
-minimalHittingSets <- function(x){
-  if (length(x) == 0) return(character(0))
-  elements <- sort(unique(unlist(x)))
-  l <- length(elements)
-  sol <- list()
-  i <- 0L
-  repeat {
-    i <- i+1L
-    cand <- combn(elements, i, simplify = FALSE)
-    toremove <- C_m_contains_one_of(cand, sol)
-    if (all(toremove)) break
-    cand <- cand[!toremove]
-    ok <- C_m_intersects_with_all(cand, x)
-    sol <- c(sol, cand[ok])
-    if (i >= l) break
-  }
-  sol
-} 

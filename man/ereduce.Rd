@@ -3,16 +3,17 @@
 
 \title{Find all minimal disjunctive normal forms (DNF) of an input DNF}
 
-\description{\code{ereduce} is similar to \code{\link[cna]{rreduce}}, but returns \emph{all} minimal expressions, whereas the latter selects one at random if there are several minimal DNFs.
+\description{\code{ereduce} builds all minimal disjunctive normal forms corresponding to an input DNF. It is similar to \code{\link[cna]{rreduce}}, which, however, only builds one minimal DNF at random.
 }
 
 \usage{
-ereduce(cond, x = full.ct(cond), full = !missing(x), simplify2constant = TRUE)
+ereduce(cond, x = full.ct(cond), full = !missing(x), 
+        simplify2constant = TRUE, maxCombs = 1e7)
 }
 
 \arguments{
   \item{cond}{
-A character string specifying a disjunctive normal form; can be either crisp-set or multi-value.
+A character string specifying a disjunctive normal form (DNF); can be either crisp-set or multi-value.
 }
   \item{x}{A 
 \code{configTable} or \code{data.frame}; can be either crisp-set or multi-value.
@@ -23,12 +24,16 @@ Logical; if \code{TRUE}, redundancies are eliminated relative to \code{full.ct(x
   \item{simplify2constant}{
 Logical; if \code{TRUE} (the default), a tautologous or contradictory \code{cond} is reduced to a constant \code{"1"} or \code{"0"}, respectively. If \code{FALSE}, a minimal tautology or contradiction, i.e. \code{"A+a"} or \code{"A*a"}, will result.
 }
+  \item{maxCombs}{
+Maximal number of iterations that will be ran in the most time-consuming step. If the number of necessary iterations exceeds \code{maxCombs}, \code{ereduce} will stop executing and return an error message stating the necessary number of iterations. Early termination can then be avoided by increasing \code{maxCombs} accordingly.
+
+}
 }
 
 \details{
 \code{ereduce} eliminates conjuncts and disjuncts from a DNF \code{cond} as long as the result of \code{condition(cond, x)} remains the same. The only required argument is \code{cond}. If \code{x} is not provided, redundancies are eliminated relative to \code{full.ct(cond)}. 
 
-\code{ereduce} generates all redundancy-free forms of \code{cond}, while \code{\link[cna]{rreduce}} only returns one randomly chosen one. \code{rreduce} is faster than \code{ereduce}, but often incomplete. \code{ereduce}, in a nutshell, searches for minimal hitting sets in \code{cond} preventing \code{cond} from being false in data \code{x}.
+\code{ereduce} generates all redundancy-free forms of \code{cond}, while \code{\link[cna]{rreduce}} only returns one randomly chosen one. \code{rreduce} is faster than \code{ereduce}, but often incomplete. In a nutshell,  \code{ereduce} searches for minimal hitting sets in \code{cond} preventing \code{cond} from being false in data \code{x}.
 }
 
 \value{

@@ -4,7 +4,7 @@ export(conCovOpt, selectMax, multipleMax, findOutcomes, reprodAssign, DNFbuild,
 import(cna)
 import(matrixStats)
 
-importFrom(dplyr, distinct)
+importFrom(dplyr, n_distinct)
 importFrom(ggplot2, ggplot, geom_rect, geom_point, geom_line, aes_string)
 importFrom(stats, median, setNames)
 importFrom(utils, combn, getFromNamespace)

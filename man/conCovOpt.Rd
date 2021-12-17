@@ -13,7 +13,7 @@ Find consistency and coverage optima for configurational data
 
 \usage{
 conCovOpt(x, outcome = NULL, ..., rm.dup.factors = FALSE, rm.const.factors = FALSE,
-          maxCombs = 1e+07, approx = FALSE, allConCov = FALSE)
+          maxCombs = 1e+07, approx = FALSE, allConCov)
 \method{print}{conCovOpt}(x, ...)
 \method{plot}{conCovOpt}(x, con = 1, cov = 1, ...)
 }
@@ -23,7 +23,7 @@ conCovOpt(x, outcome = NULL, ..., rm.dup.factors = FALSE, rm.const.factors = FAL
 In \code{conCovOpt}: a \code{\link{data.frame}} or \code{\link{configTable}}. In the \code{print}- and \code{plot}-method: an output of \code{conCovOpt}.
 }
   \item{outcome}{
-A character vector of one or several factors in \code{x}.
+A character vector of one or several factor values in \code{x}.
 }
  \item{\dots}{
 In \code{conCovOpt}: arguments passed to \code{\link{configTable}}, e.g. \code{case.cutoff}. 
@@ -33,13 +33,13 @@ In \code{conCovOpt}: arguments passed to \code{\link{configTable}}, e.g. \code{c
   \item{rm.const.factors}{Logical;  defaults to \code{FALSE} (which is different from \code{\link{configTable}}). If \code{TRUE}, factors with constant values in \code{x} are removed.}
  
   \item{maxCombs}{
-Maximal number of combinations that will be tested for optimality.
+Maximal number of combinations that will be tested for optimality. If the number of necessary iterations exceeds \code{maxCombs}, \code{conCovOpt} will stop executing and return an error message stating the necessary number of iterations. Early termination can then be avoided by increasing \code{maxCombs} accordingly.
 }
   \item{approx}{
 Logical; if TRUE, an exhaustive search is only approximated; if FALSE, an exhaustive search is conducted. 
 }
   \item{allConCov}{
-Logical; if TRUE, all possible con-cov scores are stored as attribute "allConCov"; if FALSE, only the optimal con-cov scores are stored.
+Defunct argument (as of package version 0.5.0). See the remark in \code{?\link{multipleMax}}.
 }
   \item{con, cov}{Numeric scalars between 0 and 1 indicating consistency and coverage thresholds marking the area of "good" models in a square drawn in the plot. Points within the square correspond to models reaching these thresholds.
 }
@@ -54,12 +54,12 @@ An ordered pair (con, cov) of consistency and coverage scores is a \strong{con-c
 
 The implementation of step 4 calculates con-cov scores of about 10 million output value assignments in reasonable time, but step 3 may result in considerably more assignments. In such cases, the argument \code{approx} may be set to its non-default value \code{"TRUE"}, which determines that step 4 is only executed for those assignments closest to the \code{outcome}'s median value. This is an efficient approach for finding many, but possibly not all, con-cov optima.
 
-In case of crisp-set and multi-value data, at least one actual model (asf) inferrable from \code{x} and reaching an optimum's consistency and coverage scores is guaranteed to exist for every con-cov optimum. The function \code{\link{DNFbuild}} can be used to build these optimal models. The same does not hold for fuzzy-set data. In case of fuzzy-set data, it merely holds that the existence of a model reaching an optimum's consistency and coverage scores cannot be excluded prior to an actual application of \code{\link{cna}}. 
+In case of crisp-set and multi-value data, at least one actual model (asf) inferrable from \code{x} and reaching an optimum's consistency and coverage scores is guaranteed to exist for every con-cov optimum. The function \code{\link{DNFbuild}} can be used to build these optimal models. The same does not hold for fuzzy-set data. In fuzzy-set data it merely holds that the existence of a model reaching an optimum's consistency and coverage scores cannot be excluded prior to an actual application of \code{\link{cna}}. 
 
 }
 
 \value{
-An object of class 'conCovOpt'. The exo-groups resulting from step 2 are stored as attribute \code{"exoGroups"}, the lists of output values resulting from step 3 are stored as attribute \code{"reprodList"} (reproduction list), and all possible con-cov scores are stored as attribute \code{"allConCov"}.
+An object of class 'conCovOpt'. The exo-groups resulting from step 2 are stored as attribute \code{"exoGroups"}, the lists of output values resulting from step 3 are stored as attribute \code{"reprodList"} (reproduction list).
 }
 
 \references{
@@ -91,19 +91,12 @@ attr(cco1$A, "exoGroups")
 # Rep-list (list of values optimally reproducing the outcome).
 attr(cco1$A, "reprodList")
 
-# allConCov (add all possible con-cov scores, not just optimal ones).
-cco1_acc <- conCovOpt(dat1, outcome = "AU", allConCov = TRUE) 
-attr(cco1_acc$A, "allConCov")
-# If the allConCov table has been built, it is passed to the output of selectMax().
-sm1 <- selectMax(cco1_acc)
-attr(sm1$A, "allConCov")
-
 dat2 <- d.pacts
 # Maximal number of combinations exceeds maxCombs.
 (cco2 <- conCovOpt(dat2, outcome = "PACT")) # Generates a warning
 # Increase maxCombs.
 \donttest{(cco2_full <- try(conCovOpt(dat2, outcome = "PACT", 
-  maxCombs=1e+08))) # Takes a long time or fails due to memory shortage}
+  maxCombs=1e+08))) # Takes a long time to terminate}
 # Approximate an exhaustive search.
 (cco2_approx1 <- conCovOpt(dat2, outcome = "PACT", approx = TRUE))
 selectMax(cco2_approx1)

@@ -5,19 +5,19 @@
 using namespace Rcpp;
 
 // show() for dblIteratorList & std::vector<double>
-void show(dblIteratorList x){
-  for (size_t i=0; i<x.size(); ++i){
-    NumericVector::iterator xi = x[i];
-    Rcout << *xi << " ";
-  }
-  Rcout << std::endl;
-}
-void show(std::vector<double> x){
-  for (size_t i=0; i<x.size(); ++i){
-    Rcout << x[i] << " ";
-  }
-  Rcout << std::endl;
-}
+// void show(dblIteratorList x){
+//   for (size_t i=0; i<x.size(); ++i){
+//     NumericVector::iterator xi = x[i];
+//     Rcout << *xi << " ";
+//   }
+//   Rcout << std::endl;
+// }
+// void show(std::vector<double> x){
+//   for (size_t i=0; i<x.size(); ++i){
+//     Rcout << x[i] << " ";
+//   }
+//   Rcout << std::endl;
+// }
 
 // getStarts and getEnds for dblIteratorList
 dblIteratorList getStarts(dblList x){
@@ -92,53 +92,11 @@ test(list(1, 2, 3:4, 5, 6:7))
 // }
 
 // Aux fun dblList -> easier using std::accumulate!
-int ll(dblList x){
-  int out = 1;
+long long int ll(dblList x){
+  long long int out = 1;
   for (int i=0; i<x.size(); ++i){
-    out *= x[i].size();
+    out *= static_cast<long long int>(x[i].size());
   }
   return out;
 }
-
-// iteration using dblIteratorList
-// [[Rcpp::export]]
-NumericMatrix C_iterate(dblList dx, dblList dminxy, double Sx_base, double Sy,
-                        bool verbose = false){
-  // initialize
-  dblIteratorList dx_starts = getStarts(dx), dx_ends = getEnds(dx),
-    dminxy_starts = getStarts(dminxy), dminxy_ends = getEnds(dminxy);
-  dblIteratorList dx_it = dx_starts, dminxy_it = dminxy_starts;
-  // Define output matrix
-  NumericMatrix out(ll(dx), 2);
-  int count = 0, changed = 0;
-  size_t n = dx.size();
-  std::vector<double> cum_x(n), cum_minxy(n);
-  do {
-    for (size_t ch = changed; ch < n; ++ch){
-      if (ch == 0){
-        cum_x.front() = *dx_it.front(); cum_minxy.front() = *dminxy_it.front();
-      } else {
-        cum_x[ch] = cum_x[ch-1] + *dx_it[ch]; 
-        cum_minxy[ch] = cum_minxy[ch-1] + *dminxy_it[ch];
-      }
-    }
-    double numerator = Sx_base + cum_minxy.back();
-    double con = numerator / (Sx_base + cum_x.back());
-    double cov = numerator / Sy;
-    out(count, 0) = con; out(count, 1) = cov;
-    count++;
-    if (verbose){ 
-      Rcout << "cum_x:     "; show(cum_x);
-      Rcout << "cum_minxy: "; show(cum_minxy);
-      Rcout << "dx:      "; show(dx_it);
-      Rcout << "dminxy:  "; show(dminxy_it);
-      Rcout << "numerator=" << numerator << std::endl;
-      Rcout << "con=" << con << ", cov=" << cov << std::endl;
-    }
-    increase(dx_it, changed, dx_starts, dx_ends);
-    increase(dminxy_it, changed, dminxy_starts, dminxy_ends);
-  } while(!finished(dx_it, dx_ends));
-  return out;
-}
-
 

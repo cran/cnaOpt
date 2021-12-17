@@ -1,14 +1,18 @@
 
 conCovOpt <- function(x, outcome = NULL, ..., rm.dup.factors = FALSE, rm.const.factors = FALSE,
 											maxCombs = 1e7, approx = FALSE, allConCov = FALSE){
+  if (!missing(allConCov)) 
+  	warning("Argument `allConCov` is deprecated in conCovOpt() and is ignored; see the remark in ?selectMax", 
+  					call. = FALSE)
   eps <- 1e-12
   ct <- configTable(x, ..., rm.dup.factors = rm.dup.factors, rm.const.factors = rm.dup.factors)
   cti <- ctInfo(ct)
-  responses <- cti$resp_nms
   if (is.null(outcome)){
-    outcome <- responses
+    outcome <- cti$resp_nms
   } else {
-    stopifnot(outcome %in% responses)
+  	notNeg <- (outcome != tolower(outcome))
+		outcome[notNeg] <- toupper(outcome[notNeg])
+    stopifnot(outcome %in% colnames(cti$scores))
   }
   f <- attr(ct, "n")
 
@@ -16,18 +20,18 @@ conCovOpt <- function(x, outcome = NULL, ..., rm.dup.factors = FALSE, rm.const.f
   names(out) <- outcome
   for (outc in outcome){
     out[[outc]] <- .conCovOpt1outcome(ct, cti$scores, f, outc, eps = eps, 
-                                      maxCombs = maxCombs, approx = approx, allConCov = allConCov)
+    																	maxCombs = maxCombs, approx = approx)
   }
   attr(out, "configTable") <- ct
   class(out) <- "conCovOpt"
   out
 }
 
-.conCovOpt1outcome <- function(ct, sc, f, outcome, eps, maxCombs, approx = FALSE, allConCov = FALSE){
+.conCovOpt1outcome <- function(ct, sc, f, outcome, eps, maxCombs, approx = FALSE, cc1_only = FALSE){
   type <- attr(ct, "type")
   x_df <- as.data.frame(ct)
   y <- sc[, outcome] 
-  outcomeVar <- if (type == "mv") sub("=.+", "", outcome) else (outcome)
+  outcomeVar <- if (type == "mv") sub("=.+", "", outcome) else toupper(outcome)
   
   # step 1: grouping wrt lhs-factors --------------------------------------
   ct_without_outcome <- ct[-match(outcomeVar, names(ct)), 
@@ -50,6 +54,7 @@ conCovOpt <- function(x, outcome = NULL, ..., rm.dup.factors = FALSE, rm.const.f
     yUnique <- vapply(y_g, dplyr::n_distinct, integer(1)) == 1L
   	ff <- C_relist_Int(f[u_exoGroups], g_freqs)
   }
+  if (cc1_only) return(all(yUnique))
 
   # step 2: possible lhs-values --------------------------------------
   y1 <- rep(NA, nrow(ct_without_outcome))
@@ -61,10 +66,8 @@ conCovOpt <- function(x, outcome = NULL, ..., rm.dup.factors = FALSE, rm.const.f
   yMatch <- rowAnys(sc == y1)
   yMax <- y1 >= rowMaxs(sc)
   yMin <- y1 <= rowMins(sc)
-  #data.frame(yUnique, yMatch, yMax, yMin)
-  
+
   obvious <- yUnique & rowAnys(as.matrix(data.frame(yMatch, yMax, yMin)))
-  #cbind(ct_without_outcome, obvious)
   n1 <- length(y_g)
     
   possible <- vector("list", n1)
@@ -100,9 +103,9 @@ conCovOpt <- function(x, outcome = NULL, ..., rm.dup.factors = FALSE, rm.const.f
   #possible
   n_reprodList <- round(product(lengths(possible)))
   if (n_reprodList > maxCombs){
-    warning(sprintf("Outcome %s: n_reprodList (=%4.2e) exceeds maxCombs (=%4.2e)",
+    warning(sprintf("[conCovOpt] Outcome %s: n_reprodList (=%4.2e) exceeds maxCombs (=%4.2e)",
                     outcome, n_reprodList, maxCombs), " - no con and cov values are returned.\n",
-    				"(you may increase ", sQuote("maxCombs"), ", but calculations could take long...)", 
+    				"(you may increase ", sQuote("maxCombs"), ", but calculations may take long...)", 
     				call. = FALSE)
     out <- data.frame(con = numeric(0), cov = numeric(0), id = integer(0))
     attr(out, "reprodList") <- possible
@@ -120,16 +123,11 @@ conCovOpt <- function(x, outcome = NULL, ..., rm.dup.factors = FALSE, rm.const.f
     drop(f %*% (outer(yr, v, pmin) - v[1]))
     }
   dminxy <- Map(myfn, possible, y_g, ff)
-
-  # step 4: expanding --------------------------------
-  conCov_allCombs <- C_iterate(dx, dminxy, Sx_base, Sy)
-  colnames(conCov_allCombs) <- c("con", "cov")
-
-  # step 5: extract "best" con-cov combinations -----------------------------
-  out <- getOptim(conCov_allCombs, eps = eps)
+	blksize <- 10000
+  out <- data.frame(setNames(C_iterate2(dx, dminxy, Sx_base, Sy, blksize = blksize), 
+  													 c("con", "cov", "id")))
   attr(out, "reprodList") <- possible
   attr(out, "exoGroups") <- if (noGroups) seq_along(ff) else exoGroups
-  if (allConCov) attr(out, "allConCov") <- conCov_allCombs
   out
 }
 
@@ -142,8 +140,7 @@ getPossibleValues <- function(possibleValues, yrange){
 }  
 
 getOptim <- function(x, eps = 1e-12){
-  stopifnot(identical(ncol(x), 2L))
-  x <- distinct(data.frame(x, id = seq_len(nrow(x))))
+  x <- data.frame(x, id = seq_along(x[[1]]))
   n <- nrow(x)
   if (n <= 1L) return(x)
   ord <- order(-x[, 1], -x[, 2])

@@ -1,69 +1,67 @@
 
 # selectMax
-selectMax <- function(x, crit = quote(con*cov), cond = quote(TRUE)){
+selectMax <- function(x, crit = quote(con*cov), cond = quote(TRUE),  warn = TRUE){
   stopifnot(inherits(x, "conCovOpt"))
   for (i in seq_along(x)){
     xi <- x[[i]]
-    subsetCond <- eval(cond, xi, parent.frame())
+    attribs <- attributes(xi)[c("reprodList", "exoGroups")]
+    n <- nrow(xi)
+    subsetCond <- sapply(seq_len(n), 
+      function(i) eval(cond, xi[i, , drop = FALSE], parent.frame()))
+    if (!(is.logical(subsetCond))){
+      warning("[selectMax] 'cond' is expected to evaluate to logical, but doesn't.", 
+                call. = FALSE)
+      subsetCond <- as.logical(subsetCond)
+    }
+    if (warn && n>0 && !any(subsetCond)){
+      warning("[selectMax] Outcome ", names(x)[[i]], ": no solution matches the condition '", 
+              deparse(substitute(cond)), "'.", call. = FALSE)
+    }
     xi <- subset(xi, subsetCond) 
-    critCond <- eval(crit, xi, parent.frame())
-    xi <- xi[which.max(critCond), , drop = F]
-    attributes(xi)[c("reprodList", "exoGroups", "allConCov")] <- 
-      attributes(x[[i]])[c("reprodList", "exoGroups", "allConCov")]
+    n <- nrow(xi)
+    if (n>0){
+      xi$critValue <- sapply(seq_len(nrow(xi)), 
+        function(i) eval(crit, xi[i, , drop = FALSE], parent.frame()))
+      if (!(is.numeric(xi$critValue))){
+        warning("[selectMax] 'crit' is expected to evaluate to numeric, but doesn't.", 
+                call. = FALSE)
+        xi$critValue <- as.numeric(xi$critValue)
+      }
+      bestVal <- max(xi$critValue)
+      xi <- xi[xi$critValue == bestVal, , drop = F]
+      rownames(xi) <- NULL
+    } else {
+      xi$critValue <- numeric(0)
+    }
+    xi <- xi[c("con", "cov", "critValue", "id")]
+    attributes(xi)[c("reprodList", "exoGroups")] <- attribs
     x[[i]] <- xi
   }
-  attr(x, "crit") <- sapply(x[vapply(x, nrow, integer(1))>0], 
-                            function(d) eval(crit, d))
   attr(x, "parms") <- list(crit = crit, cond = cond)
   class(x) <- "selectMax"
   x
 }
 print.selectMax <- function(x, ...){
-  stopifnot(vapply(x, nrow, integer(1)) <= 1L)
   pr <- do.call(rbind, x)
-  pr <- data.frame(outcome = rownames(pr), pr, row.names = NULL,
-                   stringsAsFactors = FALSE)
-  pr <- pr[order(attr(x, "crit"), decreasing = TRUE), , drop = FALSE]
+  pr <- data.frame(outcome = rep(names(x), vapply(x, nrow, integer(1))), 
+                   pr, row.names = NULL, stringsAsFactors = FALSE)
+  sortOrder <- with(pr, order(match(outcome, unique(outcome)), -critValue))
+  pr <- pr[sortOrder, , drop = FALSE]
   rownames(pr) <- NULL
   print(pr, ...)
+  cat("crit:", deparse(attr(x, "parms")$crit), "\n")
   invisible(x)
 }
 
 # multipleMax
 multipleMax <- function(x, outcome){
-  stopifnot(inherits(x, "selectMax"), 
-            outcome %in% names(x),
-            length(outcome) == 1)
-  eps <- 1e-12
-  acc <- attr(x[[outcome]], "allConCov")
-  if (is.null(acc)) stop("Missing attribute 'allConCov'")
-  acc <- data.frame(outcome = outcome, 
-                    acc,
-                    id = seq_len(nrow(acc)))
-  crit <- attr(x, "parms")$crit
-  cond <- attr(x, "parms")$cond
-  acc <- subset(acc, eval(cond, acc))
-  out <- do.call(transform, list(acc, crit = crit))
-  critMax <- eval(crit, x[[outcome]])
-  out <- subset(out, crit >= critMax - eps)
-  rownames(out) <- NULL
-  out$crit <- NULL
-  out
-}
-
-# ------------------------------------------------------------------------------
-
-# findOutcomes
-findOutcomes <- function(x, con = 1, cov = 1, rm.dup.factors = FALSE, rm.const.factors = FALSE, ...){
-  x <- configTable(x, rm.dup.factors = rm.dup.factors, rm.const.factors = rm.dup.factors)
-  con_threshold <- con
-  cov_threshold <- cov
-  b <- conCovOpt(x, ...)
-  sm <- selectMax(b, cond = quote(con >= con_threshold & cov >= cov_threshold))
-  out <- data.frame(Factor = names(b), 
-                    outcome = vapply(sm, nrow, integer(1L)) > 0L)
-  rownames(out) <- NULL
-  out
+  if (!inherits(x, "selectMax")) stop("multipleMax() expects an objects of class ", dQuote("selectMax"), call. = FALSE)
+  if (!all(outcome %in% names(x))) stop("Invalid 'outcome' argument.")
+  warning("multipleMax() is now obsolete. It essentially returns its input. See the remark in ?selectMax.")
+  attribs <- attributes(x)[c("configTable", "class", "parms")]
+  x <- x[outcome]
+  attributes(x)[c("configTable", "class", "parms")] <- attribs
+  x
 }
 
 # ------------------------------------------------------------------------------
@@ -93,29 +91,42 @@ if (F){
 # ------------------------------------------------------------
 
 # reprodAssign
-reprodAssign <- function(x, outcome, id = xi$id){
-  stopifnot(inherits(x, "selectMax"), outcome %in% names(x),
-            length(outcome) == 1)
+reprodAssign <- function(x, outcome = names(x), id = xi$id){
+  stopifnot(inherits(x, c("selectMax", "conCovOpt")), outcome %in% names(x))
+  if (length(outcome) > 1){
+    warning("reprodAssign() expects a single outcome - taking the first of ", length(outcome), 
+            " outcomes, ", outcome[[1]], call. = FALSE)
+    outcome <- outcome[[1]]
+  }
   xi <- x[[outcome]]
-  stopifnot(length(id) == 1)
+  nid <- length(id)
   if (nrow(xi) == 0L) 
-    stop("There is no solution for outcome ", outcome, " stored in ", deparse(substitute(x)))
+    stop("No solution for outcome ", outcome, " found.")
   poss <- attr(xi, "reprodList")
-  if (!(id %in% seq_len(prod(lengths(poss))))) stop("Invalid 'id' value specified")
-  ii <- drop(getIndices(id, lengths(poss)))
-  lhsSc_g <- mapply("[", poss, ii)
+  if (!all((id%%1==0) & id>=1 & id<= prod(lengths(poss)))) 
+    stop("[reprodAssign] Invalid 'id' value specified")
+  ii <- getIndices(id, lengths(poss))
   exoGroups <- attr(xi, "exoGroups")
   ll <- lengths(exoGroups)
-  out <- numeric(sum(ll))
-  out[unlist(exoGroups)] <- rep(lhsSc_g, ll)
+  out <- matrix(NA_real_, nrow = sum(ll), ncol = nid)
+  for (i in seq_len(nid)){
+    lhsSc_g <- mapply("[", poss, ii[i, ])
+    out[unlist(exoGroups), i] <- rep(lhsSc_g, ll)
+  }
   out
 }
 
 # ------------------------------------------------------------------------------
 
 # DNFbuild
-DNFbuild <- function(x, outcome, reduce = c("rreduce", "ereduce", "none"), id = xi$id){
-  stopifnot(inherits(x, "selectMax"), outcome %in% names(x))
+DNFbuild <- function(x, outcome = names(x), 
+                     reduce = c("ereduce", "rreduce", "none"), id = xi$id, maxCombs = 1e7){
+  stopifnot(inherits(x, c("selectMax", "conCovOpt")), outcome %in% names(x))
+  if (length(outcome) > 1){
+    warning("DNFbuild() expects a single outcome - taking the first of ", length(outcome), 
+            " outcomes, ", outcome[[1]], call. = FALSE)
+    outcome <- outcome[[1]]
+  }
   # resolve reduce arg
   if (isTRUE(reduce)) reduce <- "rreduce"
   if (isFALSE(reduce) | is.null(reduce)) reduce <- "none"
@@ -130,21 +141,26 @@ DNFbuild <- function(x, outcome, reduce = c("rreduce", "ereduce", "none"), id = 
   poss <- attr(xi, "reprodList")
   lhsSc <- reprodAssign(x, outcome, id)
   d <- as.data.frame(ct)
+  stopifnot(nrow(d) == nrow(lhsSc))
   outcomeVar <- if (type == "mv") sub("=.+", "", outcome) else outcome
   d[[outcomeVar]] <- NULL
-  stopifnot(nrow(d) == length(lhsSc))
   dups <- duplicated(d)
-  d <- d[!dups, , drop = FALSE]
-  lhsSc <- lhsSc[!dups]
-  d <- subset(d, lhsSc==1)
-  b <- matrix(colnames(d), nrow(d), ncol(d), byrow = TRUE)
-  if (type == "cs"){
-    b[d == 0] <- tolower(b[d == 0])
-  } else if (type == "mv"){
-    b <- array(paste0(b, "=", as.matrix(d)), dim(b))
+  d0 <- d[!dups, , drop = FALSE]
+  lhsSc <- lhsSc[!dups, , drop = FALSE]
+  out <- vector("list", length(id))
+  for (i in seq_along(id)){
+    d <- subset(d0, lhsSc[, i]==1)
+    b <- matrix(colnames(d), nrow(d), ncol(d), byrow = TRUE)
+    if (type == "cs"){
+      b[d == 0] <- tolower(b[d == 0])
+    } else if (type == "mv"){
+      b <- array(paste0(b, "=", as.matrix(d)), dim(b))
+    }
+    out_i <- C_recCharList2char(list(split(b, row(b))), " + ")
+    if (reduce == "rreduce") out_i <- rreduce(out_i, ct, full = FALSE)
+    if (reduce == "ereduce") out_i <- ereduce(out_i, ct, full = FALSE, maxCombs = maxCombs)
+    out[[i]] <- out_i
   }
-  out <- C_recCharList2char(list(split(b, row(b))), " + ")
-  if (reduce == "rreduce") out <- rreduce(out, ct, full = FALSE)
-  if (reduce == "ereduce") out <- ereduce(out, ct, full = FALSE)
-  out
+  unique(setdiff(unlist(out), outcome))
 }
+
