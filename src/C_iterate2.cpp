@@ -68,7 +68,7 @@ LogicalVector C_ccoKeep(const NumericVector con, const NumericVector cov){
 	for (int i=1; i<n; ++i){
 		int j = ord(i);
 		bool keep=(cov(j)>=cummaxCov);
-		if ((cov(j)==cummaxCov) & (con(j)<lastCon)) keep=false;
+		if ((cov(j)==cummaxCov) && (con(j)<lastCon)) keep=false;
 		if (keep){
 			out(j)=true;
 			cummaxCov=cov(j);

@@ -98,7 +98,7 @@ List C_mhs_iteration(const int m, const LogicalMatrix m_x, const LogicalMatrix m
   List out(100);
   IntegerVector ind=combn_initialize_indices(m);
   while(ind(0)>=0){
-  	if ((solLengths.size()>0) & C_containsSolution(ind, m_sol, solLengths)){
+  	if ((solLengths.size()>0) && C_containsSolution(ind, m_sol, solLengths)){
   		combn_increase(ind, n);
   		continue;
   	}

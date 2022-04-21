@@ -1,3 +1,6 @@
+Changes in cnaOpt 0.5.1 (2022-04-20)
+	* fixed a minor bug in C++ code
+
 Changes in cnaOpt 0.5.0 (2021-12-17)
 	* selectMax(): Improved handling of multiple optima - as a consequence, the function multipleMax() and the argument allConCov in conCovOpt() are now obsolete (but kept for backward compatibility).
 	* New argument warn in selectMax().

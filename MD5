@@ -1,4 +1,4 @@
-e2e6200fb1dde195d6fe663d4ea26aeb *DESCRIPTION
+980de12131acc1f5d7d31bdb9e79cccd *DESCRIPTION
 b9a2eef276d1a1d8378b12bda42ae438 *NAMESPACE
 b143214b46fd692cb93cc8f2c0ac3099 *R/RcppExports.R
 024a700e37b0f3f52969cdaad7fc3a5e *R/cnaOpt.R
@@ -6,7 +6,7 @@ b143214b46fd692cb93cc8f2c0ac3099 *R/RcppExports.R
 b93c7be6d5e50bf46b354cf46d817b29 *R/conCovOpt_utils.R
 21f46ad987b5ef74d9b5544862979d3f *R/ereduce.R
 8afbc2527f2491be58276b12c39e8807 *R/findOutcomes.R
-21d0b8e797c47995ef3bf765a59e438c *inst/NEWS
+8947e3f13caf3bfcc118ed1e213289dc *inst/NEWS
 744af352093ad93f994d60fc5eaf3a65 *man/cnaOpt.Rd
 30ce1b3110731235c52b4278b528325a *man/conCovOpt.Rd
 6a97fa42b3dd687a5a839b8b9e67cdd5 *man/conCovOpt_utils.Rd
@@ -15,7 +15,7 @@ b93c7be6d5e50bf46b354cf46d817b29 *R/conCovOpt_utils.R
 c720c56bee811ed21ae3136afa26784b *man/selectMax.Rd
 224d6c0fdeb387587cb0b3f61d4e975e *src/C_iterate.cpp
 488e5cb53d504dd30964911e0944d2bf *src/C_iterate.h
-6c5c8fecc7416e95aaf68a9a84fb8457 *src/C_iterate2.cpp
+71baaca4da03ca2a96935d8e0719337f *src/C_iterate2.cpp
 817f8dd8ac2ecb482ae31d7133219c40 *src/RcppExports.cpp
-ddcc7d7666a7d625c7fce3191701d5ca *src/min_hitting_sets_aux.cpp
+26ee61e1df979bfed132ce0907aec871 *src/min_hitting_sets_aux.cpp
 412a479dbd060bea119aafb0c7bf1202 *src/typedefs.h
