@@ -29,7 +29,7 @@ conCovOpt <- function(x, outcome = NULL, ..., rm.dup.factors = FALSE, rm.const.f
 
 .conCovOpt1outcome <- function(ct, sc, f, outcome, eps, maxCombs, approx = FALSE, cc1_only = FALSE){
   type <- attr(ct, "type")
-  x_df <- as.data.frame(ct)
+  x_df <- as.data.frame(ct, warn = FALSE)
   y <- sc[, outcome] 
   outcomeVar <- if (type == "mv") sub("=.+", "", outcome) else toupper(outcome)
   
@@ -44,7 +44,7 @@ conCovOpt <- function(x, outcome = NULL, ..., rm.dup.factors = FALSE, rm.const.f
     yUnique <- rep(TRUE, nrow(ct_without_outcome))
     ff <- C_relist_Int(f, g_freqs)
   } else {
-  	cx <- do.call(paste, c(as.data.frame(ct)[-match(outcomeVar, names(ct))], 
+  	cx <- do.call(paste, c(x_df[-match(outcomeVar, names(ct))], 
   												 list(sep = "\r")))
 		cx <- as.integer(factor(cx, levels = unique(cx)))
 		g_freqs <- tabulate(cx, max(cx))

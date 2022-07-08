@@ -140,7 +140,7 @@ DNFbuild <- function(x, outcome = names(x),
     stop("There is no solution for outcome ", outcome, " stored in ", deparse(substitute(x)))
   poss <- attr(xi, "reprodList")
   lhsSc <- reprodAssign(x, outcome, id)
-  d <- as.data.frame(ct)
+  d <- as.data.frame(ct, warn = FALSE)
   stopifnot(nrow(d) == nrow(lhsSc))
   outcomeVar <- if (type == "mv") sub("=.+", "", outcome) else outcome
   d[[outcomeVar]] <- NULL

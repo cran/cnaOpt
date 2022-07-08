@@ -1,3 +1,6 @@
+Changes in cnaOpt 0.5.2 (2022-07-08)
+	* Minor adjustment as a consequence of an internal change in package cna
+
 Changes in cnaOpt 0.5.1 (2022-04-20)
 	* fixed a minor bug in C++ code
 
